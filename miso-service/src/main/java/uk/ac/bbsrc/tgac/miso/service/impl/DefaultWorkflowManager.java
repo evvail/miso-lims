@@ -3,13 +3,13 @@ package uk.ac.bbsrc.tgac.miso.service.impl;
 import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow.WorkflowName;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.eaglegenomics.simlims.core.User;
 
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow;
@@ -33,9 +33,12 @@ public class DefaultWorkflowManager implements WorkflowManager {
     return makeWorkflow(workflowName);
   }
 
-  private Workflow makeWorkflow(String workflowNameString) {
+  private Workflow makeWorkflow(String workflowName) {
+    return makeWorkflow(WorkflowName.valueOf(workflowName));
+  }
+
+  private Workflow makeWorkflow(WorkflowName workflowName) {
     Workflow workflow;
-    WorkflowName workflowName = WorkflowName.valueOf(workflowNameString);
 
     switch (workflowName) {
     case LOADSEQUENCER:
@@ -45,61 +48,67 @@ public class DefaultWorkflowManager implements WorkflowManager {
       throw new IllegalArgumentException("Unknown workflowName");
     }
 
-    workflow.setProgress(makeProgress(workflowName, getCurrentUser()));
+    workflow.setProgress(makeProgress(workflowName));
     return workflow;
   }
 
-  private User getCurrentUser() {
-    // todo
-    return null;
+  private Workflow makeWorkflow(Progress progress) {
+    return makeWorkflow(progress.getWorkflowName());
   }
 
-  private Progress makeProgress(WorkflowName workflowName, User user) {
+  private Progress makeProgress(WorkflowName workflowName) {
     Progress progress = new ProgressImpl();
     progress.setWorkflowName(workflowName);
-    progress.setUser(user);
-    // todo: set other fields
     return progress;
   }
 
   @Override
   public Workflow processInput(Workflow workflow, String input) {
-    // todo authentication
+    // todo
     return null;
   }
 
   @Override
   public Workflow processInput(Workflow workflow, int stepNumber, String input) {
-    // todo authentication
+    // todo
     return null;
   }
 
   @Override
-  public Workflow cancelInput(Workflow workflow) {
-    // todo authentication
+  public Workflow cancelInput(Workflow workflow) throws IOException {
     workflow.cancelInput();
-    progressStore.save(workflow.getProgress());
+    saveProgress(workflow.getProgress());
     return workflow;
   }
 
   private void saveProgress(Progress progress) throws IOException {
-    // todo: throw if wrong user
+    throwIfUnauthenticated();
     progress.setUser(authorizationManager.getCurrentUser());
+    if (progress.getCreationTime() == null) {
+      progress.setCreationTime(new Date());
+    }
+    progress.setLastModified(new Date());
+    progressStore.save(progress);
+  }
+
+  private void throwIfUnauthenticated() {
+    // todo
   }
 
   @Override
   public Workflow loadProgress(long id) {
+    throwIfUnauthenticated();
     Progress progress = progressStore.get(id);
-    Workflow workflow = makeWorkflow(progress.getWorkflowName().toString());
+    Workflow workflow = makeWorkflow(progress.getWorkflowName());
     workflow.setProgress(progress);
-    // todo
-    return null;
+    return workflow;
   }
 
   @Override
-  public List<Workflow> listUserWorkflows() {
-    // todo
-    return null;
+  public List<Workflow> listUserWorkflows() throws IOException {
+    throwIfUnauthenticated();
+    return progressStore.listByUserId(authorizationManager.getCurrentUser().getUserId()).stream().map(this::makeWorkflow)
+        .collect(Collectors.toList());
   }
 
   @Override
