@@ -8,9 +8,9 @@ import uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow;
 public interface WorkflowManager {
   Workflow beginWorkflow(String workflowName) throws IOException;
 
-  Workflow processInput(Workflow workflow, String input);
+  Workflow processInput(Workflow workflow, String input) throws IOException;
 
-  Workflow processInput(Workflow workflow, int stepNumber, String input);
+  Workflow processInput(Workflow workflow, int stepNumber, String input) throws IOException;
 
   Workflow cancelInput(Workflow workflow) throws IOException;
 

@@ -5,6 +5,7 @@ import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow.WorkflowName;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.WorkflowStepPrompt;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.LoadSequencerWorkflow;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.ProgressImpl;
 import uk.ac.bbsrc.tgac.miso.core.store.ProgressStore;
@@ -63,13 +67,20 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   @Override
-  public Workflow processInput(Workflow workflow, String input) {
-    // todo
-    return null;
+  public Workflow processInput(Workflow workflow, String input) throws IOException {
+    workflow.processInput(makeProgressStep(workflow.getNextStep().getDataTypes(), input));
+    saveProgress(workflow.getProgress());
+    return workflow;
   }
 
   @Override
-  public Workflow processInput(Workflow workflow, int stepNumber, String input) {
+  public Workflow processInput(Workflow workflow, int stepNumber, String input) throws IOException {
+    workflow.processInput(stepNumber, makeProgressStep(workflow.getNextStep().getDataTypes(), input));
+    saveProgress(workflow.getProgress());
+    return workflow;
+  }
+
+  private ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) {
     // todo
     return null;
   }
