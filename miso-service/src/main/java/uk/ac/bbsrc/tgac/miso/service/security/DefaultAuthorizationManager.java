@@ -15,6 +15,7 @@ import com.eaglegenomics.simlims.core.User;
 import com.eaglegenomics.simlims.core.manager.SecurityManager;
 
 import uk.ac.bbsrc.tgac.miso.core.data.impl.UserImpl;
+import uk.ac.bbsrc.tgac.miso.core.exception.AuthorizationIOException;
 import uk.ac.bbsrc.tgac.miso.core.security.SecurableByProfile;
 import uk.ac.bbsrc.tgac.miso.core.util.LimsUtils;
 
@@ -182,4 +183,10 @@ public class DefaultAuthorizationManager implements AuthorizationManager {
     return filterUnreadable(unfiltered, x -> x);
   }
 
+  @Override
+  public void throwIfNotOwner(User owner) throws IOException {
+    if (!getCurrentUser().equals(owner)) {
+      throw new AuthorizationException("Current user is not owner");
+    }
+  }
 }

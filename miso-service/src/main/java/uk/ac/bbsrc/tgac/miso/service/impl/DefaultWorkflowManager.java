@@ -16,7 +16,6 @@ import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow;
-import uk.ac.bbsrc.tgac.miso.core.data.workflow.WorkflowStepPrompt;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.LoadSequencerWorkflow;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.ProgressImpl;
 import uk.ac.bbsrc.tgac.miso.core.store.ProgressStore;
@@ -93,7 +92,7 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   private void saveProgress(Progress progress) throws IOException {
-    throwIfUnauthenticated();
+    authorizationManager.throwIfNotOwner(progress.getUser());
     progress.setUser(authorizationManager.getCurrentUser());
     if (progress.getCreationTime() == null) {
       progress.setCreationTime(new Date());
@@ -102,14 +101,10 @@ public class DefaultWorkflowManager implements WorkflowManager {
     progressStore.save(progress);
   }
 
-  private void throwIfUnauthenticated() {
-    // todo
-  }
-
   @Override
-  public Workflow loadProgress(long id) {
-    throwIfUnauthenticated();
+  public Workflow loadProgress(long id) throws IOException {
     Progress progress = progressStore.get(id);
+    authorizationManager.throwIfNotOwner(progress.getUser());
     Workflow workflow = makeWorkflow(progress.getWorkflowName());
     workflow.setProgress(progress);
     return workflow;
@@ -117,7 +112,6 @@ public class DefaultWorkflowManager implements WorkflowManager {
 
   @Override
   public List<Workflow> listUserWorkflows() throws IOException {
-    throwIfUnauthenticated();
     return progressStore.listByUserId(authorizationManager.getCurrentUser().getUserId()).stream().map(this::makeWorkflow)
         .collect(Collectors.toList());
   }

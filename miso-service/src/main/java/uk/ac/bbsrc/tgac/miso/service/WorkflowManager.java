@@ -14,7 +14,7 @@ public interface WorkflowManager {
 
   Workflow cancelInput(Workflow workflow) throws IOException;
 
-  Workflow loadProgress(long id);
+  Workflow loadProgress(long id) throws IOException;
 
   List<Workflow> listUserWorkflows() throws IOException;
 
