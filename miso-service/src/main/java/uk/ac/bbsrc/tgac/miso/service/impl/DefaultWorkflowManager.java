@@ -14,9 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.sun.xml.internal.ws.developer.MemberSubmissionAddressing;
-
-import uk.ac.bbsrc.tgac.miso.core.data.Barcodable;
 import uk.ac.bbsrc.tgac.miso.core.data.Barcodable.EntityType;
 import uk.ac.bbsrc.tgac.miso.core.data.impl.view.BarcodableView;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
@@ -94,43 +91,55 @@ public class DefaultWorkflowManager implements WorkflowManager {
     return workflow;
   }
 
-  private ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) {
-    ValidationResult validationResult = new ValidationResult();
-    if (containsBarcodable(inputTypes)) {
-      List<BarcodableView> views = barcodableViewService.searchByBarcode(input, extractEntityTypes(inputTypes));
-      if (views.size() > 0) {
-        validationResult.addError(new ValidationError("Found entities with duplicate barcodes"));
-        validationResult.throwIfInvalid();
-      } else if (views.size() == 1) {
-        return makeProgressStep(views.get(1));
-      } else {
-        if (!containsPrimitive(inputTypes)) {
-          validationResult.addError(new ValidationError("Barcode not found"));
-          validationResult.throwIfInvalid();
-        }
-      }
-    } else if (containsEntity(inputTypes)) {
-      // todo
+  private ProgressStep makeProgressStep(Set<InputType> expectedTypes, String input) {
+    if (containsBarcodable(expectedTypes)) {
+      return extractBarcodable(expectedTypes, input);
     } else {
-      makeProgressStep(getPrimitiveType(inputTypes), input);
+      return extractPrimitive(expectedTypes, input);
     }
-    // todo
-    return null;
   }
 
-  private ProgressStep makeProgressStep(InputType inputType, String input) {
-    // todo
-    return null;
+  private ProgressStep extractPrimitive(Set<InputType> expectedTypes, String input) {
+    if (!containsPrimitive(expectedTypes))
+      throw new ValidationException(Collections.singletonList(new ValidationError("Could not convert input to primitive type")));
+
+    switch (getPrimitiveType(expectedTypes)) {
+    case INTEGER:
+      IntegerProgressStep step = new IntegerProgressStep();
+      step.setInput(Integer.parseInt(input));
+      return step;
+    default:
+      throw new ValidationException(Collections.singletonList(new ValidationError("Unexpected primitive type")));
+    }
   }
 
+  private ProgressStep extractBarcodable(Set<InputType> expectedTypes, String input) {
+    List<BarcodableView> views = barcodableViewService.searchByBarcode(input, extractEntityTypes(expectedTypes));
+
+    if (views.size() > 0) {
+      throw new ValidationException(Collections.singletonList(new ValidationError("Found entities with duplicate barcodes")));
+    } else if (views.size() == 1) {
+      return makeProgressStep(views.get(1));
+    } else  {
+      return extractPrimitive(expectedTypes, input);
+    }
+  }
+
+  /**
+   * Assumes inputTypes contains a primitive type
+   */
   private InputType getPrimitiveType(Set<InputType> inputTypes) {
-    // todo
-    return null;
+    // todo: fix get
+    return inputTypes.stream().filter(this::isPrimitive).findFirst().get();
   }
 
-  private boolean containsEntity(Set<InputType> inputTypes) {
-    // todo
-    return false;
+  private boolean isPrimitive(InputType type) {
+    switch(type) {
+    case INTEGER:
+      return true;
+    default:
+      return false;
+    }
   }
 
   private boolean containsPrimitive(Set<InputType> inputTypes) {
@@ -139,11 +148,6 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   private ProgressStep makeProgressStep(BarcodableView barcodableView) {
-    // todo
-    return null;
-  }
-
-  private InputType entityTypeToInputType(EntityType targetType) {
     // todo
     return null;
   }

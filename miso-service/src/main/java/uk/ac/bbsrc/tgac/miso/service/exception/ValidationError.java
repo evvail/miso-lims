@@ -31,7 +31,7 @@ public class ValidationError implements Serializable {
   /**
    * Constructs a ValidationError to describe one of possibly several reasons that an object is invalid. If the error applies to a specific
    * field, a different constructor should be used
-   * 
+   *
    * @param message user-friendly description of invalidity
    */
   public ValidationError(String message) {
