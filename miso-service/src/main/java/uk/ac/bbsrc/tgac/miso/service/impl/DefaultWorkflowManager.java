@@ -93,7 +93,7 @@ public class DefaultWorkflowManager implements WorkflowManager {
     Collections.sort(factoryTypes);
 
     for (FactoryType factoryType : factoryTypes) {
-      ProgressStep step = toFactory(factoryType).create(input);
+      ProgressStep step = makeFactory(factoryType, expectedTypes).create(input);
       if (step != null) {
         return step;
       }
@@ -102,10 +102,10 @@ public class DefaultWorkflowManager implements WorkflowManager {
     throw new ValidationException(Collections.singletonList(new ValidationError("Could not construct ProgressStep")));
   }
 
-  private ProgressStepFactory toFactory(FactoryType factoryType) {
+  private ProgressStepFactory makeFactory(FactoryType factoryType, Set<InputType> expectedTypes) {
     switch (factoryType) {
     case BARCODABLE:
-      return new BarcodableProgressStepFactory();
+      return new BarcodableProgressStepFactory(expectedTypes);
     default:
       return new IntegerProgressStepFactory();
     }
@@ -157,6 +157,12 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   private class BarcodableProgressStepFactory implements ProgressStepFactory {
+    private final Set<InputType> inputTypes;
+
+    BarcodableProgressStepFactory(Set<InputType> inputTypes) {
+      this.inputTypes = inputTypes;
+    }
+
     @Override
     public ProgressStep create(String input) {
       // todo
