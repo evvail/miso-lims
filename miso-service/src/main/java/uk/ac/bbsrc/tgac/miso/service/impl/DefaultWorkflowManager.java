@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,12 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import uk.ac.bbsrc.tgac.miso.core.data.Barcodable.EntityType;
+import uk.ac.bbsrc.tgac.miso.core.data.impl.view.BarcodableView;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.IntegerProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.LoadSequencerWorkflow;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.PoolProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.ProgressImpl;
 import uk.ac.bbsrc.tgac.miso.core.store.ProgressStore;
 import uk.ac.bbsrc.tgac.miso.service.BarcodableViewService;
@@ -88,12 +92,12 @@ public class DefaultWorkflowManager implements WorkflowManager {
     return workflow;
   }
 
-  private ProgressStep makeProgressStep(Set<InputType> expectedTypes, String input) {
-    List<FactoryType> factoryTypes = getFactoryTypes(expectedTypes);
+  private ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) throws IOException {
+    List<FactoryType> factoryTypes = getFactoryTypes(inputTypes);
     Collections.sort(factoryTypes);
 
     for (FactoryType factoryType : factoryTypes) {
-      ProgressStep step = makeFactory(factoryType, expectedTypes).create(input);
+      ProgressStep step = makeFactory(factoryType, inputTypes).create(input);
       if (step != null) {
         return step;
       }
@@ -102,17 +106,17 @@ public class DefaultWorkflowManager implements WorkflowManager {
     throw new ValidationException(Collections.singletonList(new ValidationError("Could not construct ProgressStep")));
   }
 
-  private ProgressStepFactory makeFactory(FactoryType factoryType, Set<InputType> expectedTypes) {
+  private ProgressStepFactory makeFactory(FactoryType factoryType, Set<InputType> inputTypes) {
     switch (factoryType) {
     case BARCODABLE:
-      return new BarcodableProgressStepFactory(expectedTypes);
+      return new BarcodableProgressStepFactory(inputTypes);
     default:
       return new IntegerProgressStepFactory();
     }
   }
 
-  private List<FactoryType> getFactoryTypes(Set<InputType> expectedTypes) {
-    return expectedTypes.stream().map(InputType::getFactoryType).collect(Collectors.toList());
+  private List<FactoryType> getFactoryTypes(Set<InputType> inputTypes) {
+    return inputTypes.stream().map(InputType::getFactoryType).collect(Collectors.toList());
   }
 
   @Override
@@ -153,7 +157,7 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   private interface ProgressStepFactory {
-    ProgressStep create(String input);
+    ProgressStep create(String input) throws IOException;
   }
 
   private class BarcodableProgressStepFactory implements ProgressStepFactory {
@@ -164,9 +168,28 @@ public class DefaultWorkflowManager implements WorkflowManager {
     }
 
     @Override
-    public ProgressStep create(String input) {
-      // todo
-      return null;
+    public ProgressStep create(String input) throws IOException {
+      List<BarcodableView> views = barcodableViewService.searchByBarcode(input, getEntityTypes());
+      if (views.size() == 0) {
+        return null;
+      } else if (views.size() == 1) {
+        return makeProgressStep(views.get(1));
+      } else {
+        throw new ValidationException(Collections.singletonList(new ValidationError("Duplicate barcodes found")));
+      }
+    }
+
+    private ProgressStep makeProgressStep(BarcodableView view) throws IOException {
+      switch (view.getId().getTargetType()) {
+      default:
+        PoolProgressStep step = new PoolProgressStep();
+        step.setInput(barcodableViewService.getEntity(view));
+        return step;
+      }
+    }
+
+    private List<EntityType> getEntityTypes() {
+      return this.inputTypes.stream().map(InputType::toEntityType).filter(Objects::nonNull).collect(Collectors.toList());
     }
   }
 
