@@ -36,13 +36,10 @@ import uk.ac.bbsrc.tgac.miso.service.security.AuthorizationManager;
 @Transactional(rollbackFor = Exception.class)
 public class DefaultWorkflowManager implements WorkflowManager {
   @Autowired
-  AuthorizationManager authorizationManager;
+  private AuthorizationManager authorizationManager;
 
   @Autowired
-  ProgressStore progressStore;
-
-  @Autowired
-  BarcodableViewService barcodableViewService;
+  private ProgressStore progressStore;
 
   @Override
   public Workflow beginWorkflow(String workflowName) {
@@ -162,6 +159,9 @@ public class DefaultWorkflowManager implements WorkflowManager {
 
   private class BarcodableProgressStepFactory implements ProgressStepFactory {
     private final Set<InputType> inputTypes;
+
+    @Autowired
+    private BarcodableViewService barcodableViewService;
 
     BarcodableProgressStepFactory(Set<InputType> inputTypes) {
       this.inputTypes = inputTypes;
