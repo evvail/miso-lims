@@ -26,17 +26,21 @@ public interface ProgressStep extends Serializable, Comparable<ProgressStep> {
   enum InputType {
     POOL {
       @Override
-      public boolean isBarcodable() {
-        return true;
+      public FactoryType getFactoryType() {
+        return FactoryType.BARCODABLE;
       }
     },
     INTEGER {
       @Override
-      public boolean isBarcodable() {
-        return false;
+      public FactoryType getFactoryType() {
+        return FactoryType.INTEGER;
       }
     };
 
-    public abstract boolean isBarcodable();
+    public abstract FactoryType getFactoryType();
+  }
+
+  enum FactoryType {
+    BARCODABLE, INTEGER
   }
 }
