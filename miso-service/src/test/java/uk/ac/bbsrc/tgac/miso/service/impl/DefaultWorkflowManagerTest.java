@@ -92,4 +92,19 @@ public class DefaultWorkflowManagerTest {
     assertEquals(Integer.parseInt(INTEGER_INPUT),
         ((IntegerProgressStep) sut.makeProgressStep(Sets.newHashSet(InputType.INTEGER, InputType.POOL), INTEGER_INPUT)).getInput());
   }
+
+  @Test
+  public void testDuplicateBarcodes() throws IOException {
+    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
+        .thenReturn(Arrays.asList(new BarcodableView(), new BarcodableView()));
+    exception.expect(ValidationException.class);
+    sut.makeProgressStep(Sets.newHashSet(InputType.POOL), POOL_BARCODE);
+  }
+
+  @Test
+  public void testAllFactoriesFail() throws IOException {
+    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL))).thenReturn(Collections.emptyList());
+    exception.expect(ValidationException.class);
+    sut.makeProgressStep(Sets.newHashSet(InputType.POOL), POOL_BARCODE);
+  }
 }
