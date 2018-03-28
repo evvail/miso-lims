@@ -1,6 +1,7 @@
 package uk.ac.bbsrc.tgac.miso.service.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -68,9 +69,9 @@ public class DefaultWorkflowManagerTest {
     BarcodableId id = new BarcodableId();
     id.setTargetType(EntityType.POOL);
     view.setId(id);
-    Mockito.when(barcodableViewService.getEntity(view)).thenReturn(pool);
+    when(barcodableViewService.getEntity(view)).thenReturn(pool);
 
-    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
+    when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
         .thenReturn(Collections.singletonList(view));
 
     assertEquals(POOL_ID, ((PoolProgressStep) sut.makeProgressStep(Sets.newHashSet(InputType.POOL), POOL_BARCODE)).getInput().getId());
@@ -85,9 +86,9 @@ public class DefaultWorkflowManagerTest {
     BarcodableId id = new BarcodableId();
     id.setTargetType(EntityType.POOL);
     view.setId(id);
-    Mockito.when(barcodableViewService.getEntity(view)).thenReturn(pool);
+    when(barcodableViewService.getEntity(view)).thenReturn(pool);
 
-    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
+    when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
         .thenReturn(Collections.singletonList(view));
     assertEquals(Integer.parseInt(INTEGER_INPUT),
         ((IntegerProgressStep) sut.makeProgressStep(Sets.newHashSet(InputType.INTEGER, InputType.POOL), INTEGER_INPUT)).getInput());
@@ -95,7 +96,7 @@ public class DefaultWorkflowManagerTest {
 
   @Test
   public void testDuplicateBarcodes() throws IOException {
-    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
+    when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL)))
         .thenReturn(Arrays.asList(new BarcodableView(), new BarcodableView()));
     exception.expect(ValidationException.class);
     sut.makeProgressStep(Sets.newHashSet(InputType.POOL), POOL_BARCODE);
@@ -103,7 +104,7 @@ public class DefaultWorkflowManagerTest {
 
   @Test
   public void testAllFactoriesFail() throws IOException {
-    Mockito.when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL))).thenReturn(Collections.emptyList());
+    when(barcodableViewService.searchByBarcode(POOL_BARCODE, Arrays.asList(EntityType.POOL))).thenReturn(Collections.emptyList());
     exception.expect(ValidationException.class);
     sut.makeProgressStep(Sets.newHashSet(InputType.POOL), POOL_BARCODE);
   }
