@@ -39,7 +39,8 @@ public interface WorkflowManager {
   List<Workflow> listUserWorkflows() throws IOException;
 
   /**
-   * todo
+   * Make all changes associated with workflow.
+   * After completion, workflow's associated Progress will be deleted.
    */
   void execute(Workflow workflow) throws IOException;
 }

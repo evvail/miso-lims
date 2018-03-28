@@ -169,6 +169,8 @@ public class DefaultWorkflowManager implements WorkflowManager {
     for (Action action : workflow.getActions()) {
       execute(action);
     }
+
+    // todo: delete Progress object from database
   }
 
   private void execute(Action action) throws IOException {
