@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import uk.ac.bbsrc.tgac.miso.core.data.Barcodable.EntityType;
 import uk.ac.bbsrc.tgac.miso.core.data.impl.view.BarcodableView;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
@@ -36,6 +38,9 @@ import uk.ac.bbsrc.tgac.miso.service.security.AuthorizationManager;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class DefaultWorkflowManager implements WorkflowManager {
+  @Autowired
+  private BarcodableViewService barcodableViewService;
+
   @Autowired
   private AuthorizationManager authorizationManager;
 
@@ -90,7 +95,8 @@ public class DefaultWorkflowManager implements WorkflowManager {
     return workflow;
   }
 
-  private ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) throws IOException {
+  @VisibleForTesting
+  protected ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) throws IOException {
     List<FactoryType> factoryTypes = new ArrayList<>(getFactoryTypes(inputTypes));
     Collections.sort(factoryTypes);
 
@@ -161,9 +167,6 @@ public class DefaultWorkflowManager implements WorkflowManager {
   private class BarcodableProgressStepFactory implements ProgressStepFactory {
     private final Set<InputType> inputTypes;
 
-    @Autowired
-    private BarcodableViewService barcodableViewService;
-
     BarcodableProgressStepFactory(Set<InputType> inputTypes) {
       this.inputTypes = inputTypes;
     }
@@ -174,7 +177,7 @@ public class DefaultWorkflowManager implements WorkflowManager {
       if (views.size() == 0) {
         return null;
       } else if (views.size() == 1) {
-        return makeProgressStep(views.get(1));
+        return makeProgressStep(views.get(0));
       } else {
         throw new ValidationException(Collections.singletonList(new ValidationError("Duplicate barcodes found")));
       }
