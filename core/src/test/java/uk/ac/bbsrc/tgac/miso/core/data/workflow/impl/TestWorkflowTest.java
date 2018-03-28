@@ -17,6 +17,7 @@ import com.google.common.collect.Sets;
 import junit.framework.AssertionFailedError;
 import uk.ac.bbsrc.tgac.miso.core.data.Pool;
 import uk.ac.bbsrc.tgac.miso.core.data.impl.PoolImpl;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.Action;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
@@ -54,6 +55,7 @@ public class TestWorkflowTest {
     assertThrows(IllegalArgumentException.class, () -> workflow.getStep(1));
     assertFalse(workflow.isComplete());
     assertEquals(Collections.emptyList(), workflow.getLog());
+    assertThrows(IllegalArgumentException.class, () -> workflow.getActions());
   }
 
   private <T extends Throwable> void assertThrows(Class<T> expectedType, Runnable runnable) {
@@ -104,6 +106,7 @@ public class TestWorkflowTest {
     assertThrows(IllegalArgumentException.class, () -> workflow.getStep(2));
     assertFalse(workflow.isComplete());
     assertEquals(Collections.singletonList(String.format("Processed integer %d", input)), workflow.getLog());
+    assertThrows(IllegalArgumentException.class, () -> workflow.getActions());
   }
 
   @Test
@@ -136,17 +139,30 @@ public class TestWorkflowTest {
     assertReceivedTwoInputs(workflow, INT_1, POOL_ID);
   }
 
-  private void assertReceivedTwoInputs(Workflow workflow, int input1, long input2Id) {
+  private void assertReceivedTwoInputs(Workflow workflow, int int_input, long poolId) {
     assertThrows(IllegalArgumentException.class, () -> workflow.processInput(2, makePoolStep(POOL_ID)));
 
-    assertEquivalent(makeProgress(makeIntegerStep(input1, 0), makePoolStep(input2Id, 1)), workflow.getProgress());
+    assertEquivalent(makeProgress(makeIntegerStep(int_input, 0), makePoolStep(poolId, 1)), workflow.getProgress());
     assertThrows(IllegalArgumentException.class, workflow::getNextStep);
     assertIntegerPrompt(workflow.getStep(0));
     assertPoolPrompt(workflow.getStep(1));
     assertThrows(IllegalArgumentException.class, () -> workflow.getStep(2));
     assertTrue(workflow.isComplete());
-    assertEquals(Arrays.asList(String.format("Processed integer %d", input1), String.format("Processed Pool with id %d", input2Id)),
+    assertEquals(Arrays.asList(String.format("Processed integer %d", int_input), String.format("Processed Pool with id %d", poolId)),
         workflow.getLog());
+    assertPoolAction(workflow.getActions(), poolId, int_input);
+  }
+
+  /**
+   * Assert that actions contains exactly 1 action containing a Pool with the given id and concentration
+   */
+  private void assertPoolAction(List<Action> actions, long id, int concentration) {
+    assertEquals(1, actions.size());
+    Action action = actions.get(0);
+    Pool pool = (Pool) action.getEntity();
+    assertEquals(Action.Command.SAVE, action.getCommand());
+    assertEquals(id, pool.getId());
+    assertEquals(concentration, pool.getConcentration(), 0.1);
   }
 
   @Test

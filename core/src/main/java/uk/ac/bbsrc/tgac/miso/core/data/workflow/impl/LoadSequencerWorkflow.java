@@ -5,6 +5,7 @@ import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow.WorkflowName.LOA
 import java.util.List;
 
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.AbstractWorkflow;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.Action;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.WorkflowStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.WorkflowStepPrompt;
@@ -48,5 +49,10 @@ public class LoadSequencerWorkflow extends AbstractWorkflow {
   @Override
   public void cancelInput() {
 
+  }
+
+  @Override
+  public List<Action> getActions() {
+    return null;
   }
 }

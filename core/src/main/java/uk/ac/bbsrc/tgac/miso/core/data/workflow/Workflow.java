@@ -44,4 +44,6 @@ public interface Workflow {
   enum WorkflowName {
     LOADSEQUENCER
   }
+
+  List<Action> getActions();
 }

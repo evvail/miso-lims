@@ -6,7 +6,9 @@ import java.util.List;
 
 import com.google.common.collect.Sets;
 
+import uk.ac.bbsrc.tgac.miso.core.data.Pool;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.AbstractWorkflow;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.Action;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.WorkflowStep;
@@ -67,6 +69,19 @@ public class TestWorkflow extends AbstractWorkflow {
       steps.get(currentStepNumber()).cancelInput();
       nextStepNumber--;
     }
+  }
+
+  @Override
+  public List<Action> getActions() {
+    if (!isComplete()) throw new IllegalArgumentException("Workflow is not complete");
+
+    Action action = new Action();
+    action.setCommand(Action.Command.SAVE);
+    Pool pool = ((PoolProgressStep) (steps.get(1).getProgressStep())).getInput();
+    pool.setConcentration((double) ((IntegerProgressStep) steps.get(0).getProgressStep()).getInput());
+    action.setEntity(pool);
+
+    return Collections.singletonList(action);
   }
 
   private int currentStepNumber() {

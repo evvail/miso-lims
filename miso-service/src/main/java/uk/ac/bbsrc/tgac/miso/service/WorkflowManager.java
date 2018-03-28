@@ -41,5 +41,5 @@ public interface WorkflowManager {
   /**
    * todo
    */
-  void execute(Workflow workflow);
+  void execute(Workflow workflow) throws IOException;
 }

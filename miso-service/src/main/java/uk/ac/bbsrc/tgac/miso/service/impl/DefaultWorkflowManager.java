@@ -1,5 +1,6 @@
 package uk.ac.bbsrc.tgac.miso.service.impl;
 
+import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Action.Command.SAVE;
 import static uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.FactoryType;
 import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow.WorkflowName;
 
@@ -19,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.google.common.annotations.VisibleForTesting;
 
 import uk.ac.bbsrc.tgac.miso.core.data.Barcodable.EntityType;
+import uk.ac.bbsrc.tgac.miso.core.data.Pool;
 import uk.ac.bbsrc.tgac.miso.core.data.impl.view.BarcodableView;
+import uk.ac.bbsrc.tgac.miso.core.data.workflow.Action;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.Progress;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.InputType;
@@ -30,6 +33,7 @@ import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.PoolProgressStep;
 import uk.ac.bbsrc.tgac.miso.core.data.workflow.impl.ProgressImpl;
 import uk.ac.bbsrc.tgac.miso.core.store.ProgressStore;
 import uk.ac.bbsrc.tgac.miso.service.BarcodableViewService;
+import uk.ac.bbsrc.tgac.miso.service.PoolService;
 import uk.ac.bbsrc.tgac.miso.service.WorkflowManager;
 import uk.ac.bbsrc.tgac.miso.service.exception.ValidationError;
 import uk.ac.bbsrc.tgac.miso.service.exception.ValidationException;
@@ -38,6 +42,9 @@ import uk.ac.bbsrc.tgac.miso.service.security.AuthorizationManager;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class DefaultWorkflowManager implements WorkflowManager {
+  @Autowired
+  private PoolService poolService;
+
   @Autowired
   private BarcodableViewService barcodableViewService;
 
@@ -156,8 +163,18 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   @Override
-  public void execute(Workflow workflow) {
-    // todo
+  public void execute(Workflow workflow) throws IOException {
+    for (Action action : workflow.getActions()) {
+      execute(action);
+    }
+  }
+
+  private void execute(Action action) throws IOException {
+    if (action.getEntity().getClass() == Pool.class) {
+      if (action.getCommand() == SAVE) {
+        poolService.save((Pool) action.getEntity());
+      }
+    }
   }
 
   private interface ProgressStepFactory {
