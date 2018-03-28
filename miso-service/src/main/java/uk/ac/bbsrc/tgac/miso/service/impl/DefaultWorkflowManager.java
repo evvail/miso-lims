@@ -4,6 +4,7 @@ import static uk.ac.bbsrc.tgac.miso.core.data.workflow.ProgressStep.FactoryType;
 import static uk.ac.bbsrc.tgac.miso.core.data.workflow.Workflow.WorkflowName;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -90,7 +91,7 @@ public class DefaultWorkflowManager implements WorkflowManager {
   }
 
   private ProgressStep makeProgressStep(Set<InputType> inputTypes, String input) throws IOException {
-    List<FactoryType> factoryTypes = getFactoryTypes(inputTypes);
+    List<FactoryType> factoryTypes = new ArrayList<>(getFactoryTypes(inputTypes));
     Collections.sort(factoryTypes);
 
     for (FactoryType factoryType : factoryTypes) {
@@ -112,8 +113,8 @@ public class DefaultWorkflowManager implements WorkflowManager {
     }
   }
 
-  private List<FactoryType> getFactoryTypes(Set<InputType> inputTypes) {
-    return inputTypes.stream().map(InputType::getFactoryType).collect(Collectors.toList());
+  private Set<FactoryType> getFactoryTypes(Set<InputType> inputTypes) {
+    return inputTypes.stream().map(InputType::getFactoryType).collect(Collectors.toSet());
   }
 
   @Override
