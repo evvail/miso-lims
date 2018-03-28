@@ -164,6 +164,8 @@ public class DefaultWorkflowManager implements WorkflowManager {
 
   @Override
   public void execute(Workflow workflow) throws IOException {
+    if (!workflow.isComplete()) throw new IllegalArgumentException("Workflow is not complete");
+
     for (Action action : workflow.getActions()) {
       execute(action);
     }
